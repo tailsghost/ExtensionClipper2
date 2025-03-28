@@ -23,19 +23,19 @@ public struct PointD
 
     public readonly string ToString(int precision = 2)
     {
-        return string.Format($"{{0:F{precision}}, {{1:F{precision}}}", X, Y);
+        return string.Format($"{{0:F{precision}}}, {{1:F{precision}}}", X, Y);
     }
 
     public static bool operator ==(PointD lhs, PointD rhs)
     {
-        return InternalClipper.IsAlmostZero(lhs.x - rhs.x) &&
-               InternalClipper.IsAlmostZero(lhs.y - rhs.y);
+        return InternalClipper.IsAlmostZero(lhs.X - rhs.X) &&
+               InternalClipper.IsAlmostZero(lhs.Y - rhs.Y);
     }
 
     public static bool operator !=(PointD lhs, PointD rhs)
     {
-        return !InternalClipper.IsAlmostZero(lhs.x - rhs.x) ||
-               !InternalClipper.IsAlmostZero(lhs.y - rhs.y);
+        return !InternalClipper.IsAlmostZero(lhs.X - rhs.X) ||
+               !InternalClipper.IsAlmostZero(lhs.Y - rhs.Y);
     }
 
     public readonly override bool Equals(object? obj)

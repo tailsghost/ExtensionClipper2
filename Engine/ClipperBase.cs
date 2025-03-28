@@ -471,7 +471,7 @@ public class ClipperBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void AddReuseableData(ReuseableDataContainer64 reuseableData)
+    protected void AddReuseableData(ReuseableDataContainer reuseableData)
     {
         if (reuseableData._minimaList.Count == 0) return;
         _isSortedMinimaList = false;
@@ -1366,7 +1366,7 @@ public class ClipperBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DoIntersections(long topY)
+    private void DoIntersections(double topY)
     {
         if (!BuildIntersectList(topY)) return;
         ProcessIntersectList();
@@ -1380,10 +1380,10 @@ public class ClipperBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AddNewIntersectNode(Active ae1, Active ae2, long topY)
+    private void AddNewIntersectNode(Active ae1, Active ae2, double topY)
     {
         if (!InternalClipper.GetSegmentIntersectPt(
-                ae1.bot, ae1.top, ae2.bot, ae2.top, out Point64 ip))
+                ae1.bot, ae1.top, ae2.bot, ae2.top, out PointD ip))
             ip = new PointD(ae1.curX, topY);
 
         if (ip.Y > _currentBotY || ip.Y < topY)
@@ -1604,7 +1604,7 @@ public class ClipperBase
 
         if (IsHotEdge(horz))
         {
-            OutPt op = AddOutPt(horz, new Point64(horz.curX, Y));
+            OutPt op = AddOutPt(horz, new PointD(horz.curX, Y));
             AddToHorzSegList(op);
         }
 
@@ -2103,7 +2103,7 @@ public class ClipperBase
         if (AlmostEqual(op.pt.Y, pt.Y))
             return PointInPolygonResult.IsOutside;
 
-        var isAbove = op.pt.Y < pt.Y, startingAbove = isAbove;
+        bool isAbove = op.pt.Y < pt.Y, startingAbove = isAbove;
         var val = 0;
 
         op2 = op.next!;
@@ -2572,7 +2572,7 @@ public class ClipperBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Rect64 GetBounds()
+    public RectD GetBounds()
     {
         RectD bounds = Clipper.InvalidRect;
         for (var i = 0; i < _vertexList.Count;i++)

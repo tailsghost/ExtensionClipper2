@@ -7,7 +7,7 @@ public class ReuseableDataContainer
 {
     internal readonly List<LocalMinima> _minimaList;
     internal readonly List<Vertex> _vertexList;
-    public ReuseableDataContainer64()
+    public ReuseableDataContainer()
     {
         _minimaList = new List<LocalMinima>();
         _vertexList = new List<Vertex>();

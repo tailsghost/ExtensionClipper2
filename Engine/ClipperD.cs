@@ -1,4 +1,5 @@
-﻿using ExtensionClipper2.Core;
+﻿using System.Collections;
+using ExtensionClipper2.Core;
 using ExtensionClipper2.Enums;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -14,13 +15,13 @@ public class ClipperD : ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddPath(PathD path, PathType polytype, bool isOpen = false)
     {
-        base.AddPath(Clipper.ScalePath64(path), polytype, isOpen);
+        base.AddPath(path, polytype, isOpen);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddPaths(PathsD paths, PathType polytype, bool isOpen = false)
     {
-        base.AddPaths(Clipper.ScalePaths64(paths), polytype, isOpen);
+        base.AddPaths(paths, polytype, isOpen);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -120,6 +121,7 @@ public class ClipperD : ClipperBase
         {
             success = false;
         }
+
         ClearSolutionOnly();
         if (!success) return false;
         if (oPaths.Count <= 0) return true;
@@ -144,6 +146,7 @@ public class ClipperD : ClipperBase
         {
             return new NodeEnumerator(_childs);
         }
+
         private class NodeEnumerator : IEnumerator
         {
             private int position = -1;
@@ -181,4 +184,5 @@ public class ClipperD : ClipperBase
 
         }
     }
+}
 
