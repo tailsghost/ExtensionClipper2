@@ -1,1 +1,1 @@
-## Расширение для библиотеки Clipper2 от [Angus Johnson](https://github.com/AngusJohnson/Clipper2), оптимизированное для работы с double.
+## Р Р°СЃС€РёСЂРµРЅРёРµ РґР»СЏ Р±РёР±Р»РёРѕС‚РµРєРё Clipper2 РѕС‚ [Angus Johnson](https://github.com/AngusJohnson/Clipper2), РѕРїС‚РёРјРёР·РёСЂРѕРІР°РЅРЅРѕРµ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ double.
