@@ -2,7 +2,6 @@
 using ExtensionClipper2.Enums;
 using System.Runtime.CompilerServices;
 using ExtensionClipper2.Core;
-using System.IO;
 
 namespace ExtensionClipper2.Engine;
 
@@ -38,15 +37,6 @@ public class ClipperBase
         _horzSegList = new List<HorzSegment>();
         _horzJoinList = new List<HorzJoin>();
         PreserveCollinear = true;
-    }
-
-    private static bool AlmostEqual(double a, double b, double tolerance = 1e-12)
-    {
-        return Math.Abs(a - b) <= tolerance * Math.Max(Math.Abs(a), Math.Abs(b));
-    }
-    private static bool VertexValueEquals(Vertex a, Vertex b, double tolerance = 1e-12)
-    {
-        return AlmostEqual(a.pt.X, b.pt.X, tolerance) && AlmostEqual(a.pt.Y, b.pt.Y, tolerance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -98,17 +88,21 @@ public class ClipperBase
     private static double GetDx(PointD pt1, PointD pt2)
     {
         var dy = pt2.Y - pt1.Y;
+        if (Math.Abs(dy) < Epsilon.GetEpsilonValue())
+        {
+            dy = 0;
+        }
         if (dy != 0)
             return (pt2.X - pt1.X) / dy;
-        return AlmostEqual(pt2.X, pt1.X) && pt2.X > pt1.X ? double.NegativeInfinity : double.PositiveInfinity;
+        return Clipper.GreaterThan(pt2.X, pt1.X) ? double.NegativeInfinity : double.PositiveInfinity;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double TopX(Active ae, double currentY)
     {
-        if (AlmostEqual(currentY, ae.top.Y) || AlmostEqual(ae.top.X, ae.bot.X)) return ae.top.X;
+        if (Clipper.AlmostEqual(currentY, ae.top.Y) || Clipper.AlmostEqual(ae.top.X, ae.bot.X)) return ae.top.X;
 
-        if (AlmostEqual(currentY, ae.bot.Y)) return ae.bot.X;
+        if (Clipper.AlmostEqual(currentY, ae.bot.Y)) return ae.bot.X;
 
         return ae.bot.X + ae.dx * (currentY - ae.bot.Y);
     }
@@ -116,7 +110,7 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsHorizontal(Active ae)
     {
-        return AlmostEqual(ae.top.Y, ae.bot.Y);
+        return Clipper.AlmostEqual(ae.top.Y, ae.bot.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -196,28 +190,27 @@ public class ClipperBase
     {
         var result = ae.vertexTop;
         if (ae.windDx > 0)
-            while (AlmostEqual(result!.next!.pt.Y, result.pt.Y) &&
+            while (Clipper.AlmostEqual(result!.next!.pt.Y, result.pt.Y) &&
                    ((result.flags & (VertexFlags.OpenEnd |
                                      VertexFlags.LocalMax)) == VertexFlags.None))
                 result = result.next;
         else
-            while (AlmostEqual(result!.prev!.pt.Y, result.pt.Y) &&
+            while (Clipper.AlmostEqual(result!.prev!.pt.Y, result.pt.Y) &&
                    ((result.flags & (VertexFlags.OpenEnd |
                                      VertexFlags.LocalMax)) == VertexFlags.None))
                 result = result.prev;
-        if (!IsMaxima(result)) result = null; 
+        if (!IsMaxima(result)) result = null;
         return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vertex? GetCurrYMaximaVertex(Active ae)
     {
-        Vertex? result = ae.vertexTop;
+        var result = ae.vertexTop;
         if (ae.windDx > 0)
-            while (AlmostEqual(result!.next!.pt.Y,result.pt.Y)) result = result.next;
+            while (Clipper.AlmostEqual(result!.next!.pt.Y, result.pt.Y)) result = result.next;
         else
-            while (AlmostEqual(result!.next!.pt.Y,result.pt.Y)) result = result.next;
-            while (AlmostEqual(result!.prev!.pt.Y,result.pt.Y)) result = result.prev;
+            while (Clipper.AlmostEqual(result!.prev!.pt.Y, result.pt.Y)) result = result.prev;
 
         if (!IsMaxima(result)) result = null;
         return result;
@@ -227,10 +220,10 @@ public class ClipperBase
     {
         public readonly int Compare(IntersectNode a, IntersectNode b)
         {
-            if (!AlmostEqual(a.pt.Y,b.pt.Y)) return (a.pt.Y > b.pt.Y) ? -1 : 1;
-            var result = AlmostEqual(a.pt.X, b.pt.X);
+            if (!Clipper.AlmostEqual(a.pt.Y, b.pt.Y)) return (Clipper.GreaterThan(a.pt.Y, b.pt.Y)) ? -1 : 1;
+            var result = Clipper.AlmostEqual(a.pt.X, b.pt.X);
             if (result) return 0;
-            return (!result && a.pt.X < b.pt.X) ? -1 : 1;
+            return (!result && Clipper.LessThan(a.pt.X, b.pt.X)) ? -1 : 1;
         }
     }
 
@@ -244,11 +237,11 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SwapOutrecs(Active ae1, Active ae2)
     {
-        OutRec? or1 = ae1.outrec; 
-        OutRec? or2 = ae2.outrec; 
+        var or1 = ae1.outrec;
+        var or2 = ae2.outrec;
         if (or1 == or2)
         {
-            Active? ae = or1!.frontEdge;
+            var ae = or1!.frontEdge;
             or1.frontEdge = or1.backEdge;
             or1.backEdge = ae;
             return;
@@ -280,7 +273,7 @@ public class ClipperBase
         while (newOwner.owner != null && newOwner.owner.pts == null)
             newOwner.owner = newOwner.owner.owner;
 
-        OutRec? tmp = newOwner;
+        var tmp = newOwner;
         while (tmp != null && tmp != outrec)
             tmp = tmp.owner;
         if (tmp != null)
@@ -292,7 +285,7 @@ public class ClipperBase
     private static double Area(OutPt op)
     {
         var area = 0.0;
-        OutPt op2 = op;
+        var op2 = op;
         do
         {
             area += op2.prev.pt.Y + op2.pt.Y * op2.prev.pt.X - op2.pt.X;
@@ -312,7 +305,7 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static OutRec? GetRealOutRec(OutRec? outRec)
     {
-        while ((outRec != null) && (outRec.pts == null))
+        while (outRec is { pts: null })
             outRec = outRec.owner;
         return outRec;
     }
@@ -428,7 +421,7 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool HasLocMinAtY(double y)
     {
-        return (_currentLocMin < _minimaList.Count && AlmostEqual(_minimaList[_currentLocMin].vertex.pt.Y, y));
+        return (_currentLocMin < _minimaList.Count && Clipper.AlmostEqual(_minimaList[_currentLocMin].vertex.pt.Y, y));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -526,7 +519,7 @@ public class ClipperBase
                 return (GetPolyType(ae) == PathType.Subject) ? result : !result;
 
             case ClipType.Xor:
-                return true; 
+                return true;
 
             default:
                 return false;
@@ -603,7 +596,7 @@ public class ClipperBase
             }
 
             ae.windCount2 = ae2.windCount2;
-            ae2 = ae2.nextInAEL; 
+            ae2 = ae2.nextInAEL;
         }
 
         if (_fillrule == FillRule.EvenOdd)
@@ -657,8 +650,8 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsValidAelOrder(Active resident, Active newcomer)
     {
-        if (newcomer.curX != resident.curX)
-            return newcomer.curX > resident.curX;
+        if (!Clipper.AlmostEqual(newcomer.curX, resident.curX))
+            return Clipper.GreaterThan(newcomer.curX, resident.curX);
 
         var d = InternalClipper.CrossProduct(resident.top, newcomer.bot, newcomer.top);
         if (d != 0) return (d < 0);
@@ -679,7 +672,7 @@ public class ClipperBase
         var y = newcomer.bot.Y;
         var newcomerIsLeft = newcomer.isLeftBound;
 
-        if (!AlmostEqual(resident.bot.Y, y) || !AlmostEqual(resident.localMin.vertex.pt.Y,y))
+        if (!Clipper.AlmostEqual(resident.bot.Y, y) || !Clipper.AlmostEqual(resident.localMin.vertex.pt.Y, y))
             return newcomer.isLeftBound;
         if (resident.isLeftBound != newcomerIsLeft)
             return newcomerIsLeft;
@@ -727,6 +720,13 @@ public class ClipperBase
         ae.nextInAEL = ae2;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void AddToHorzSegList(OutPt op)
+    {
+        if (op.outrec.isOpen) return;
+        _horzSegList.Add(new HorzSegment(op));
+    }
+
     private void InsertLocalMinimaIntoAEL(double botY)
     {
         while (HasLocMinAtY(botY))
@@ -764,7 +764,7 @@ public class ClipperBase
                     bot = localMinima.vertex.pt,
                     curX = localMinima.vertex.pt.X,
                     windDx = 1,
-                    vertexTop = localMinima.vertex.next, 
+                    vertexTop = localMinima.vertex.next,
                     top = localMinima.vertex.next!.pt,
                     outrec = null,
                     localMin = localMinima
@@ -841,7 +841,7 @@ public class ClipperBase
                 PushHorz(leftBound);
             else
                 InsertScanline(leftBound.top.Y);
-        } 
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1078,7 +1078,7 @@ public class ClipperBase
         InsertScanline(ae.top.Y);
 
         CheckJoinLeft(ae, ae.bot);
-        CheckJoinRight(ae, ae.bot, true); 
+        CheckJoinRight(ae, ae.bot, true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1108,7 +1108,7 @@ public class ClipperBase
         {
             if (IsOpen(ae1) && IsOpen(ae2)) return;
             if (IsOpen(ae2)) SwapActives(ref ae1, ref ae2);
-            if (IsJoined(ae2)) Split(ae2, pt); 
+            if (IsJoined(ae2)) Split(ae2, pt);
 
             if (_cliptype == ClipType.Union)
             {
@@ -1300,7 +1300,7 @@ public class ClipperBase
                         resultOp = AddLocalMinPoly(ae1, ae2, pt);
                         break;
 
-                    default: 
+                    default:
                         if (e1Wc2 <= 0 || e2Wc2 <= 0) return;
                         resultOp = AddLocalMinPoly(ae1, ae2, pt);
                         break;
@@ -1314,7 +1314,7 @@ public class ClipperBase
     {
         var prev = ae.prevInAEL;
         var next = ae.nextInAEL;
-        if (prev == null && next == null && (ae != _actives)) return; 
+        if (prev == null && next == null && (ae != _actives)) return;
         if (prev != null)
             prev.nextInAEL = next;
         else
@@ -1332,7 +1332,7 @@ public class ClipperBase
             ae.prevInSEL = ae.prevInAEL;
             ae.nextInSEL = ae.nextInAEL;
             ae.jump = ae.nextInSEL;
-            ae.curX = ae.joinWith == JoinWith.Left ? ae.prevInAEL!.curX : 
+            ae.curX = ae.joinWith == JoinWith.Left ? ae.prevInAEL!.curX :
                 TopX(ae, topY);
             ae = ae.nextInAEL;
         }
@@ -1355,7 +1355,7 @@ public class ClipperBase
                 ConvertHorzSegsToJoins();
                 _horzSegList.Clear();
             }
-            _currentBotY = y; 
+            _currentBotY = y;
             if (!PopScanline(out y))
                 break;
             DoIntersections(y);
@@ -1393,30 +1393,30 @@ public class ClipperBase
             switch (absDx1 > 100)
             {
                 case true when absDx2 > 100:
-                {
-                    if (absDx1 > absDx2)
-                        ip = InternalClipper.GetClosestPtOnSegment(ip, ae1.bot, ae1.top);
-                    else
-                        ip = InternalClipper.GetClosestPtOnSegment(ip, ae2.bot, ae2.top);
-                    break;
-                }
+                    {
+                        if (absDx1 > absDx2)
+                            ip = InternalClipper.GetClosestPtOnSegment(ip, ae1.bot, ae1.top);
+                        else
+                            ip = InternalClipper.GetClosestPtOnSegment(ip, ae2.bot, ae2.top);
+                        break;
+                    }
                 case true:
                     ip = InternalClipper.GetClosestPtOnSegment(ip, ae1.bot, ae1.top);
                     break;
                 default:
-                {
-                    if (absDx2 > 100)
-                        ip = InternalClipper.GetClosestPtOnSegment(ip, ae2.bot, ae2.top);
-                    else
                     {
-                        if (ip.Y < topY) ip.Y = topY;
-                        else ip.Y = _currentBotY;
-                        if (absDx1 < absDx2) ip.X = TopX(ae1, ip.Y);
-                        else ip.X = TopX(ae2, ip.Y);
-                    }
+                        if (absDx2 > 100)
+                            ip = InternalClipper.GetClosestPtOnSegment(ip, ae2.bot, ae2.top);
+                        else
+                        {
+                            if (ip.Y < topY) ip.Y = topY;
+                            else ip.Y = _currentBotY;
+                            if (absDx1 < absDx2) ip.X = TopX(ae1, ip.Y);
+                            else ip.X = TopX(ae2, ip.Y);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
         var node = new IntersectNode(ip, ae1, ae2);
@@ -1557,7 +1557,7 @@ public class ClipperBase
         }
         leftX = horz.top.X;
         rightX = horz.curX;
-        return false; 
+        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1566,10 +1566,10 @@ public class ClipperBase
         var wasTrimmed = false;
         var pt = NextVertex(horzEdge).pt;
 
-        while (AlmostEqual(pt.Y, horzEdge.top.Y))
+        while (Clipper.AlmostEqual(pt.Y, horzEdge.top.Y))
         {
             if (preserveCollinear &&
-                (!AlmostEqual(pt.X, horzEdge.top.X) && pt.X < horzEdge.top.X) != (AlmostEqual(horzEdge.bot.X, horzEdge.top.X) && horzEdge.bot.X < horzEdge.top.X))
+                (Clipper.LessThan(pt.X, horzEdge.top.X)) != (Clipper.LessThan(horzEdge.bot.X, horzEdge.top.X)))
                 break;
 
             horzEdge.vertexTop = NextVertex(horzEdge);
@@ -1600,7 +1600,7 @@ public class ClipperBase
           GetCurrYMaximaVertex(horz);
 
         bool isLeftToRight =
-          ResetHorzDirection(horz, vertex_max, out double leftX, out double rightX);
+          ResetHorzDirection(horz, vertex_max, out var leftX, out var rightX);
 
         if (IsHotEdge(horz))
         {
@@ -1638,25 +1638,21 @@ public class ClipperBase
                 PointD pt;
                 if (vertex_max != horz.vertexTop || IsOpenEnd(horz))
                 {
-                    if ((isLeftToRight && ae.curX > rightX) ||
-                        (!isLeftToRight && ae.curX < leftX)) break;
+                    if ((isLeftToRight && Clipper.GreaterThan(ae.curX, rightX)) ||
+                        (!isLeftToRight && Clipper.LessThan(ae.curX, leftX))) break;
 
-                    if (AlmostEqual(ae.curX, horz.top.X) && !IsHorizontal(ae))
+                    if (Clipper.AlmostEqual(ae.curX, horz.top.X) && !IsHorizontal(ae))
                     {
                         pt = NextVertex(horz).pt;
                         if (IsOpen(ae) && !IsSamePolyType(ae, horz) && !IsHotEdge(ae))
                         {
-                            var topX = TopX(ae, pt.Y);
-                            var result = AlmostEqual(topX, pt.X);
-                            if (result)
-                                break;
 
-                            if ((isLeftToRight && (topX > pt.X)) ||
-                              (!isLeftToRight && (topX < pt.X))) break;
+                            if ((isLeftToRight && (Clipper.GreaterThan(TopX(ae, pt.Y), pt.X))) ||
+                              (!isLeftToRight && (Clipper.LessThan(TopX(ae, pt.Y), pt.X)))) break;
                         }
 
-                        else if ((isLeftToRight && (TopX(ae, pt.Y) > pt.X || AlmostEqual(TopX(ae, pt.Y), pt.X))) ||
-                                 (!isLeftToRight && (TopX(ae, pt.Y) < pt.X || AlmostEqual(TopX(ae, pt.Y), pt.X))))
+                        else if ((isLeftToRight && (Clipper.GreaterThan(TopX(ae, pt.Y), pt.X)) ||
+                                 (!isLeftToRight && (Clipper.LessThan(TopX(ae, pt.Y), pt.X)))))
                         {
                             break;
                         }
@@ -1700,7 +1696,7 @@ public class ClipperBase
                 DeleteFromAEL(horz);
                 return;
             }
-            if (!AlmostEqual(NextVertex(horz).pt.Y,horz.top.Y))
+            if (!Clipper.AlmostEqual(NextVertex(horz).pt.Y, horz.top.Y))
                 break;
 
             if (IsHotEdge(horz))
@@ -1711,7 +1707,7 @@ public class ClipperBase
             isLeftToRight = ResetHorzDirection(horz,
               vertex_max, out leftX, out rightX);
 
-        } 
+        }
 
         if (IsHotEdge(horz))
         {
@@ -1725,7 +1721,7 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DoTopOfScanbeam(double y)
     {
-        _sel = null; 
+        _sel = null;
         var ae = _actives;
         while (ae != null)
         {
@@ -1734,7 +1730,7 @@ public class ClipperBase
                 ae.curX = ae.top.X;
                 if (IsMaxima(ae))
                 {
-                    ae = DoMaxima(ae); 
+                    ae = DoMaxima(ae);
                     continue;
                 }
 
@@ -1742,9 +1738,9 @@ public class ClipperBase
                     AddOutPt(ae, ae.top);
                 UpdateEdgeIntoAEL(ae);
                 if (IsHorizontal(ae))
-                    PushHorz(ae); 
+                    PushHorz(ae);
             }
-            else 
+            else
                 ae.curX = TopX(ae, y);
 
             ae = ae.nextInAEL;
@@ -1774,7 +1770,7 @@ public class ClipperBase
         }
 
         var maxPair = GetMaximaPair(ae);
-        if (maxPair == null) return nextE; 
+        if (maxPair == null) return nextE;
 
         if (IsJoined(ae)) Split(ae, ae.top);
         if (IsJoined(maxPair)) Split(maxPair, maxPair.top);
@@ -1834,10 +1830,8 @@ public class ClipperBase
             !IsHotEdge(e) || !IsHotEdge(prev) ||
             IsHorizontal(e) || IsHorizontal(prev) ||
             IsOpen(e) || IsOpen(prev)) return;
-        if (((pt.Y < e.top.Y + 2) || AlmostEqual(pt.Y, e.top.Y + 2)) ||
-            ((pt.Y < prev.top.Y + 2) || AlmostEqual(pt.Y, prev.top.Y + 2)) &&
-            ((e.bot.Y > pt.Y) || AlmostEqual(e.bot.Y, pt.Y)) ||
-            ((prev.bot.Y > pt.Y) || AlmostEqual(prev.bot.Y, pt.Y)))
+        if ((Clipper.LessThan(pt.Y, e.top.Y + 2) || Clipper.LessThan(pt.Y, prev.top.Y + 2)) &&
+            (Clipper.GreaterThan(e.bot.Y, pt.Y) || Clipper.GreaterThan(prev.bot.Y, pt.Y)))
         {
             return;
         }
@@ -1846,7 +1840,7 @@ public class ClipperBase
         {
             if (Clipper.PerpendicDistFromLineSqrd(pt, prev.bot, prev.top) > 0.25) return;
         }
-        else if (!AlmostEqual(e.curX, prev.curX)) return;
+        else if (!Clipper.AlmostEqual(e.curX, prev.curX)) return;
         if (!InternalClipper.IsCollinear(e.top, pt, prev.top)) return;
 
         if (e.outrec!.idx == prev.outrec!.idx)
@@ -1863,15 +1857,15 @@ public class ClipperBase
     private void CheckJoinRight(Active e,
         PointD pt, bool checkCurrX = false)
     {
-        Active? next = e.nextInAEL;
+        var next = e.nextInAEL;
         if (next == null ||
             !IsHotEdge(e) || !IsHotEdge(next) ||
             IsHorizontal(e) || IsHorizontal(next) ||
             IsOpen(e) || IsOpen(next)) return;
-        if (((pt.Y < e.top.Y + 2) || AlmostEqual(pt.Y, e.top.Y + 2)) ||
-            ((pt.Y < next.top.Y + 2) || AlmostEqual(pt.Y, next.top.Y + 2)) &&
-            ((e.bot.Y > pt.Y) || AlmostEqual(e.bot.Y, pt.Y)) ||
-            ((next.bot.Y > pt.Y) || AlmostEqual(next.bot.Y, pt.Y)))
+        if ((Clipper.LessThan(pt.Y, e.top.Y + 2) ||
+            Clipper.LessThan(pt.Y, next.top.Y + 2)) &&
+            (Clipper.GreaterThan(e.bot.Y, pt.Y) ||
+            Clipper.GreaterThan(next.bot.Y, pt.Y)))
         {
             return;
         }
@@ -1880,7 +1874,7 @@ public class ClipperBase
         {
             if (Clipper.PerpendicDistFromLineSqrd(pt, next.bot, next.top) > 0.25) return;
         }
-        else if (!AlmostEqual(e.curX, next.curX)) return;
+        else if (!Clipper.AlmostEqual(e.curX, next.curX)) return;
         if (!InternalClipper.IsCollinear(e.top, pt, next.top)) return;
 
         if (e.outrec!.idx == next.outrec!.idx)
@@ -1907,8 +1901,8 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool SetHorzSegHeadingForward(HorzSegment hs, OutPt opP, OutPt opN)
     {
-        if (AlmostEqual(opP.pt.X, opN.pt.X)) return false;
-        if (!AlmostEqual(opP.pt.X, opN.pt.X) && opP.pt.X < opN.pt.X)
+        if (Clipper.AlmostEqual(opP.pt.X, opN.pt.X)) return false;
+        if (Clipper.LessThan(opP.pt.X, opN.pt.X))
         {
             hs.leftOp = opP;
             hs.rightOp = opN;
@@ -1933,16 +1927,16 @@ public class ClipperBase
         if (outrecHasEdges)
         {
             OutPt opA = outrec.pts!, opZ = opA.next!;
-            while (opP != opZ && AlmostEqual(opP.prev.pt.Y, curr_y))
+            while (opP != opZ && Clipper.AlmostEqual(opP.prev.pt.Y, curr_y))
                 opP = opP.prev;
-            while (opN != opA && AlmostEqual(opN.next!.pt.Y,curr_y))
+            while (opN != opA && Clipper.AlmostEqual(opN.next!.pt.Y, curr_y))
                 opN = opN.next;
         }
         else
         {
-            while (opP.prev != opN && AlmostEqual(opP.prev.pt.Y,curr_y))
+            while (opP.prev != opN && Clipper.AlmostEqual(opP.prev.pt.Y, curr_y))
                 opP = opP.prev;
-            while (opN.next != opP && AlmostEqual(opN.next!.pt.Y, curr_y))
+            while (opN.next != opP && Clipper.AlmostEqual(opN.next!.pt.Y, curr_y))
                 opN = opN.next;
         }
         var result =
@@ -1952,7 +1946,7 @@ public class ClipperBase
         if (result)
             hs.leftOp!.horz = hs;
         else
-            hs.rightOp = null; 
+            hs.rightOp = null;
         return result;
     }
 
@@ -1991,7 +1985,7 @@ public class ClipperBase
 
     private void ConvertHorzSegsToJoins()
     {
-        int k = 0;
+        var k = 0;
         for (var index = 0; index < _horzSegList.Count; index++)
         {
             if (UpdateHorzSegment(_horzSegList[index]))
@@ -2001,30 +1995,30 @@ public class ClipperBase
 
         _horzSegList.Sort(HorzSegSort);
 
-        for (int i = 0; i < k - 1; i++)
+        for (var i = 0; i < k - 1; i++)
         {
             var hs1 = _horzSegList[i];
-            for (int j = i + 1; j < k; j++)
+            for (var j = i + 1; j < k; j++)
             {
                 var hs2 = _horzSegList[j];
 
-                if ((hs2.leftOp!.pt.X > hs1.rightOp!.pt.X || AlmostEqual(hs2.leftOp.pt.X, hs1.rightOp.pt.X)) ||
+                if ((Clipper.GreaterThanOrEqual(hs2.leftOp!.pt.X, hs1.rightOp!.pt.X)) ||
                     (hs2.leftToRight == hs1.leftToRight) ||
-                    (hs2.rightOp!.pt.X < hs1.leftOp!.pt.X || AlmostEqual(hs2.rightOp.pt.X, hs1.leftOp.pt.X)))
+                    (Clipper.LessThanOrEqual(hs2.rightOp!.pt.X, hs1.leftOp!.pt.X)))
                     continue;
 
                 double curr_y = hs1.leftOp.pt.Y;
 
                 if (hs1.leftToRight)
                 {
-                    while (AlmostEqual(hs1.leftOp.next!.pt.Y, curr_y) &&
-                           (hs1.leftOp.next.pt.X < hs2.leftOp.pt.X || AlmostEqual(hs1.leftOp.next.pt.X, hs2.leftOp.pt.X)))
+                    while (Clipper.AlmostEqual(hs1.leftOp.next!.pt.Y, curr_y) &&
+                           (Clipper.LessThanOrEqual(hs1.leftOp.next.pt.X, hs2.leftOp.pt.X)))
                     {
                         hs1.leftOp = hs1.leftOp.next;
                     }
 
-                    while (AlmostEqual(hs2.leftOp.prev.pt.Y, curr_y) &&
-                           (hs2.leftOp.prev.pt.X < hs1.leftOp.pt.X || AlmostEqual(hs2.leftOp.prev.pt.X, hs1.leftOp.pt.X)))
+                    while (Clipper.AlmostEqual(hs2.leftOp.prev.pt.Y, curr_y) &&
+                           (Clipper.LessThanOrEqual(hs2.leftOp.prev.pt.X, hs1.leftOp.pt.X)))
                     {
                         hs2.leftOp = hs2.leftOp.prev;
                     }
@@ -2036,14 +2030,14 @@ public class ClipperBase
                 }
                 else
                 {
-                    while (AlmostEqual(hs1.leftOp.prev.pt.Y, curr_y)&&
-                           (hs1.leftOp.prev.pt.X < hs2.leftOp.pt.X || AlmostEqual(hs1.leftOp.prev.pt.X, hs2.leftOp.pt.X)))
+                    while (Clipper.AlmostEqual(hs1.leftOp.prev.pt.Y, curr_y) &&
+                           (Clipper.LessThanOrEqual(hs1.leftOp.prev.pt.X, hs2.leftOp.pt.X)))
                     {
                         hs1.leftOp = hs1.leftOp.prev;
                     }
 
-                    while (AlmostEqual(hs2.leftOp.next!.pt.Y, curr_y) &&
-                           (hs2.leftOp.next.pt.X < hs1.leftOp.pt.X || AlmostEqual(hs2.leftOp.next.pt.X, hs1.leftOp.pt.X)))
+                    while (Clipper.AlmostEqual(hs2.leftOp.next!.pt.Y, curr_y) &&
+                           (Clipper.LessThanOrEqual(hs2.leftOp.next.pt.X, hs1.leftOp.pt.X)))
                     {
                         hs2.leftOp = hs2.leftOp.next;
                     }
@@ -2064,8 +2058,8 @@ public class ClipperBase
         var op2 = op;
 
         while (op2.next != op &&
-               ((AlmostEqual(op2.pt.X, op2.next!.pt.X) && AlmostEqual(op2.pt.X, op2.prev.pt.X)) ||
-                (AlmostEqual(op2.pt.Y, op2.next.pt.Y) && AlmostEqual(op2.pt.Y, op2.prev.pt.Y))))
+               ((Clipper.AlmostEqual(op2.pt.X, op2.next!.pt.X) && Clipper.AlmostEqual(op2.pt.X, op2.prev.pt.X)) ||
+                (Clipper.AlmostEqual(op2.pt.Y, op2.next.pt.Y) && Clipper.AlmostEqual(op2.pt.Y, op2.prev.pt.Y))))
         {
             op2 = op2.next;
         }
@@ -2076,8 +2070,8 @@ public class ClipperBase
 
         while (op2 != op)
         {
-            if ((!AlmostEqual(op2.pt.X, op2.next!.pt.X) || !AlmostEqual(op2.pt.X, prevOp.pt.X)) &&
-                (!AlmostEqual(op2.pt.Y, op2.next.pt.Y) || !AlmostEqual(op2.pt.Y, prevOp.pt.Y)))
+            if ((!Clipper.AlmostEqual(op2.pt.X, op2.next!.pt.X) || !Clipper.AlmostEqual(op2.pt.X, prevOp.pt.X)) &&
+                (!Clipper.AlmostEqual(op2.pt.Y, op2.next.pt.Y) || !Clipper.AlmostEqual(op2.pt.Y, prevOp.pt.Y)))
             {
                 result.Add(op2.pt);
                 prevOp = op2;
@@ -2096,14 +2090,14 @@ public class ClipperBase
         var op2 = op;
         do
         {
-            if (!AlmostEqual(op.pt.Y, pt.Y)) break;
+            if (!Clipper.AlmostEqual(op.pt.Y, pt.Y)) break;
             op = op.next!;
         } while (op != op2);
 
-        if (AlmostEqual(op.pt.Y, pt.Y))
+        if (Clipper.AlmostEqual(op.pt.Y, pt.Y))
             return PointInPolygonResult.IsOutside;
 
-        bool isAbove = op.pt.Y < pt.Y, startingAbove = isAbove;
+        bool isAbove = Clipper.LessThan(op.pt.Y, pt.Y), startingAbove = isAbove;
         var val = 0;
 
         op2 = op.next!;
@@ -2111,22 +2105,22 @@ public class ClipperBase
         {
             if (isAbove)
             {
-                while (op2 != op && (op2.pt.Y < pt.Y || AlmostEqual(op2.pt.Y, pt.Y)))
+                while (op2 != op && Clipper.LessThan(op2.pt.Y, pt.Y))
                     op2 = op2.next!;
             }
             else
             {
-                while (op2 != op && (op2.pt.Y > pt.Y || AlmostEqual(op2.pt.Y, pt.Y)))
+                while (op2 != op && Clipper.GreaterThan(op2.pt.Y, pt.Y))
                     op2 = op2.next!;
             }
 
             if (op2 == op) break;
 
-            if (AlmostEqual(op2.pt.Y, pt.Y))
+            if (Clipper.AlmostEqual(op2.pt.Y, pt.Y))
             {
-                if (AlmostEqual(op2.pt.X, pt.X) ||
-                    (AlmostEqual(op2.pt.Y, op2.prev.pt.Y) &&
-                    (pt.X < op2.prev.pt.X) != (pt.X < op2.pt.X)))
+                if (Clipper.AlmostEqual(op2.pt.X, pt.X) ||
+                    (Clipper.AlmostEqual(op2.pt.Y, op2.prev.pt.Y) &&
+                    (Clipper.LessThan(pt.X, op2.prev.pt.X)) != Clipper.LessThan(pt.X , op2.pt.X)))
                     return PointInPolygonResult.IsOn;
 
                 op2 = op2.next!;
@@ -2134,19 +2128,17 @@ public class ClipperBase
                 continue;
             }
 
-            if (op2.pt.X < pt.X || AlmostEqual(op2.pt.X, pt.X) ||
-                op2.prev.pt.X < pt.X || AlmostEqual(op2.prev.pt.X, pt.X))
+            if (Clipper.LessThanOrEqual(op2.pt.X, pt.X) || Clipper.LessThanOrEqual(op2.prev.pt.X, pt.X))
             {
-                if ((op2.prev.pt.X < pt.X && op2.pt.X < pt.X) &&
-                    !AlmostEqual(op2.prev.pt.X, pt.X) && !AlmostEqual(op2.pt.X, pt.X))
+                if ((Clipper.LessThan(op2.prev.pt.X, pt.X) && Clipper.LessThan(op2.pt.X, pt.X)))
                 {
-                    val = 1 - val; 
+                    val = 1 - val;
                 }
                 else
                 {
                     var d = InternalClipper.CrossProduct(op2.prev.pt, op2.pt, pt);
-                    if (AlmostEqual(d, 0)) return PointInPolygonResult.IsOn;
-                    if ((d < 0) == isAbove) val = 1 - val;
+                    if (Clipper.AlmostEqual(d, 0)) return PointInPolygonResult.IsOn;
+                    if ((Clipper.LessThan(d, 0)) == isAbove) val = 1 - val;
                 }
             }
             isAbove = !isAbove;
@@ -2156,8 +2148,8 @@ public class ClipperBase
         if (isAbove == startingAbove) return val == 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
 
         var dFinal = InternalClipper.CrossProduct(op2.prev.pt, op2.pt, pt);
-        if (AlmostEqual(dFinal, 0)) return PointInPolygonResult.IsOn;
-        if ((dFinal < 0) == isAbove) val = 1 - val;
+        if (Clipper.AlmostEqual(dFinal, 0)) return PointInPolygonResult.IsOn;
+        if ((Clipper.LessThan(dFinal, 0)) == isAbove) val = 1 - val;
 
         return val == 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
     }
@@ -2209,7 +2201,7 @@ public class ClipperBase
             op1b.prev = op2b;
             op2b.next = op1b;
 
-            if (or1 == or2) 
+            if (or1 == or2)
             {
                 or2 = NewOutRec();
                 or2.pts = op1b;
@@ -2221,7 +2213,7 @@ public class ClipperBase
                     or1.pts.outrec = or1;
                 }
 
-                if (_using_polytree)  
+                if (_using_polytree)
                 {
                     if (Path1InsidePath2(or1.pts, or2.pts))
                     {
@@ -2247,7 +2239,7 @@ public class ClipperBase
                 if (_using_polytree)
                 {
                     SetOwner(or2, or1);
-                    MoveSplits(or2, or1); 
+                    MoveSplits(or2, or1);
                 }
                 else
                     or2.owner = or1;
@@ -2256,9 +2248,9 @@ public class ClipperBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool PtsReallyClose(PointD pt1, PointD pt2, double tolerance = 1e-12)
+    private static bool PtsReallyClose(PointD pt1, PointD pt2)
     {
-        return (Math.Abs(pt1.X - pt2.X) < tolerance) && (Math.Abs(pt1.Y - pt2.Y) < tolerance);
+        return (Math.Abs(pt1.X - pt2.X) < Epsilon.GetEpsilonValue()) && (Math.Abs(pt1.Y - pt2.Y) < Epsilon.GetEpsilonValue());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2303,9 +2295,11 @@ public class ClipperBase
         var op2 = startOp;
         for (; ; )
         {
-            if ((InternalClipper.IsCollinear(op2!.prev.pt, op2.pt, op2.next!.pt)) &&
-                ((op2.pt == op2.prev.pt) || (op2.pt == op2.next.pt) || !PreserveCollinear ||
-                 (InternalClipper.DotProduct(op2.prev.pt, op2.pt, op2.next.pt) < 0)))
+            if (InternalClipper.IsCollinear(op2!.prev.pt, op2.pt, op2.next!.pt) &&
+                ((Clipper.AlmostEqual(op2.pt.X, op2.prev.pt.X) && Clipper.AlmostEqual(op2.pt.Y, op2.prev.pt.Y))
+                 || (Clipper.AlmostEqual(op2.pt.X, op2.next.pt.X) && Clipper.AlmostEqual(op2.pt.Y, op2.next.pt.Y))
+                 || !PreserveCollinear
+                 || Clipper.LessThan(InternalClipper.DotProduct(op2.prev.pt, op2.pt, op2.next.pt), 0)))
             {
                 if (op2 == outrec.pts)
                     outrec.pts = op2.prev;
@@ -2348,8 +2342,8 @@ public class ClipperBase
         var absArea2 = Math.Abs(area2);
 
 
-        if (AlmostEqual(ip.X, prevOp.pt.X) && AlmostEqual(ip.Y, prevOp.pt.Y) ||
-            AlmostEqual(ip.X, nextNextOp.pt.X) && AlmostEqual(ip.Y, nextNextOp.pt.Y))
+        if (Clipper.AlmostEqual(ip.X, prevOp.pt.X) && Clipper.AlmostEqual(ip.Y, prevOp.pt.Y) ||
+            Clipper.AlmostEqual(ip.X, nextNextOp.pt.X) && Clipper.AlmostEqual(ip.Y, nextNextOp.pt.Y))
         {
             nextNextOp.prev = prevOp;
             prevOp.next = nextNextOp;
@@ -2478,13 +2472,13 @@ public class ClipperBase
     private static RectD GetBounds(PathD path)
     {
         if (path.Count == 0) return new RectD();
-        RectD result = Clipper.InvalidRect;
+        var result = Clipper.InvalidRectD;
         foreach (var pt in path)
         {
-            if (pt.X < result.Left) result.Left = pt.X;
-            if (pt.X > result.Right) result.Right = pt.X;
-            if (pt.Y < result.Top) result.Top = pt.Y;
-            if (pt.Y > result.Bottom) result.Bottom = pt.Y;
+            if (Clipper.LessThan(pt.X, result.Left)) result.Left = pt.X;
+            if (Clipper.GreaterThan(pt.X, result.Right)) result.Right = pt.X;
+            if (Clipper.LessThan(pt.Y, result.Top)) result.Top = pt.Y;
+            if (Clipper.GreaterThan(pt.Y, result.Bottom)) result.Bottom = pt.Y;
         }
         return result;
     }
@@ -2504,14 +2498,14 @@ public class ClipperBase
 
     private bool CheckSplitOwner(OutRec outrec, List<int>? splits)
     {
-        for (var i = 0; i<splits!.Count;i++)
+        for (var i = 0; i < splits!.Count; i++)
         {
             var split = _outrecList[i];
             if (split.pts == null && split.splits != null &&
-                CheckSplitOwner(outrec, split.splits)) return true; 
+                CheckSplitOwner(outrec, split.splits)) return true;
             split = GetRealOutRec(split);
             if (split == null || split == outrec || split.recursiveSplit == outrec) continue;
-            split.recursiveSplit = outrec; 
+            split.recursiveSplit = outrec;
             if (split.splits != null && CheckSplitOwner(outrec, split.splits)) return true;
             if (!IsValidOwner(outrec, split) ||
                 !CheckBounds(split) ||
@@ -2574,22 +2568,22 @@ public class ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RectD GetBounds()
     {
-        RectD bounds = Clipper.InvalidRect;
-        for (var i = 0; i < _vertexList.Count;i++)
+        var bounds = Clipper.InvalidRectD;
+        for (var i = 0; i < _vertexList.Count; i++)
         {
             var v = _vertexList[i];
             do
             {
-                if (v.pt.X < bounds.Left) bounds.Left = v.pt.X;
-                if (v.pt.X > bounds.Right) bounds.Right = v.pt.X;
-                if (v.pt.Y < bounds.Top) bounds.Top = v.pt.Y;
-                if (v.pt.Y > bounds.Bottom) bounds.Bottom = v.pt.Y;
+                if (Clipper.LessThan(v.pt.X, bounds.Left)) bounds.Left = v.pt.X;
+                if (Clipper.GreaterThan(v.pt.X, bounds.Right)) bounds.Right = v.pt.X;
+                if (Clipper.LessThan(v.pt.Y, bounds.Top)) bounds.Top = v.pt.Y;
+                if (Clipper.GreaterThan(v.pt.Y, bounds.Bottom)) bounds.Bottom = v.pt.Y;
                 v = v.next!;
             } while (v != _vertexList[i]);
         }
         return bounds.IsEmpty() ? new RectD(0, 0, 0, 0) : bounds;
     }
 
-} 
+}
 
 

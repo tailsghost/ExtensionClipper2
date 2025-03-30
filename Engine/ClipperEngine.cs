@@ -8,16 +8,6 @@ namespace ExtensionClipper2.Engine;
 internal static class ClipperEngine
 {
 
-    private static bool AlmostEqual(double a, double b, double tolerance = 1e-12)
-    {
-        return Math.Abs(a - b) <= tolerance * Math.Max(Math.Abs(a), Math.Abs(b));
-    }
-
-    private static bool VertexValueEquals(Vertex a, Vertex b, double tolerance = 1e-12)
-    {
-        return AlmostEqual(a.pt.X, b.pt.X, tolerance) && AlmostEqual(a.pt.Y, b.pt.Y, tolerance);
-    }
-
     internal static void AddLocMin(Vertex vert, PathType polytype, bool isOpen,
       List<LocalMinima> minimaList)
     {
@@ -69,7 +59,7 @@ internal static class ClipperEngine
                 }
             }
             if (prev_v?.prev == null) continue;
-            if (!isOpen && VertexValueEquals(prev_v, v0!)) prev_v = prev_v.prev;
+            if (!isOpen && Clipper.VertexValueEquals(prev_v, v0!)) prev_v = prev_v.prev;
             prev_v.next = v0;
             v0!.prev = prev_v;
             if (!isOpen && prev_v.next == prev_v) continue;
@@ -92,11 +82,11 @@ internal static class ClipperEngine
             else
             {
                 prev_v = v0.prev;
-                while (prev_v != v0 && AlmostEqual(prev_v!.pt.Y, v0.pt.Y))
+                while (prev_v != v0 && Clipper.AlmostEqual(prev_v!.pt.Y, v0.pt.Y))
                     prev_v = prev_v.prev;
                 if (prev_v == v0)
                     continue;
-                going_up = !AlmostEqual(prev_v.pt.Y, v0.pt.Y) && prev_v.pt.Y > v0.pt.Y;
+                going_up = !Clipper.AlmostEqual(prev_v.pt.Y, v0.pt.Y) && prev_v.pt.Y > v0.pt.Y;
             }
 
             var going_up0 = going_up;
@@ -104,12 +94,12 @@ internal static class ClipperEngine
             curr_v = v0.next;
             while (curr_v != v0)
             {
-                if (!AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && curr_v!.pt.Y > prev_v.pt.Y && going_up)
+                if (!Clipper.AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && curr_v!.pt.Y > prev_v.pt.Y && going_up)
                 {
                     prev_v.flags |= VertexFlags.LocalMax;
                     going_up = false;
                 }
-                else if (!AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && curr_v.pt.Y < prev_v.pt.Y && !going_up)
+                else if (!Clipper.AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && curr_v.pt.Y < prev_v.pt.Y && !going_up)
                 {
                     going_up = true;
                     AddLocMin(prev_v, polytype, isOpen, minimaList);

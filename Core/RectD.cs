@@ -79,10 +79,10 @@ public struct RectD
     {
         PathD result = new PathD(4)
         {
-            new PointD(left, top),
-            new PointD(right, top),
-            new PointD(right, bottom),
-            new PointD(left, bottom)
+            new PointD(Left, Top),
+            new PointD(Right, Top),
+            new PointD(Right, Bottom),
+            new PointD(Left, Bottom)
         };
         return result;
     }

@@ -9,8 +9,6 @@ namespace ExtensionClipper2.Engine;
 public class ClipperD : ClipperBase
 {
     private const string precision_range_error = "Error: Precision is out of range.";
-    private readonly double _scale;
-    private readonly double _invScale;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddPath(PathD path, PathType polytype, bool isOpen = false)
@@ -108,7 +106,6 @@ public class ClipperD : ClipperBase
         polytree.Clear();
         openPaths.Clear();
         _using_polytree = true;
-        (polytree as PolyPathD).Scale = _scale;
 
         var oPaths = new PathsD();
         var success = true;
@@ -126,8 +123,8 @@ public class ClipperD : ClipperBase
         if (!success) return false;
         if (oPaths.Count <= 0) return true;
         openPaths.EnsureCapacity(oPaths.Count);
-        foreach (PathD path in oPaths)
-            openPaths.Add(path);
+        for (var i =0; i < oPaths.Count; i++)
+            openPaths.Add(oPaths[i]);
 
         return true;
     }

@@ -3,7 +3,7 @@ using ExtensionClipper2.Enums;
 
 namespace ExtensionClipper2.Engine.Property;
 
-internal class Vertex
+public class Vertex
 {
     public readonly PointD pt;
     public Vertex? next;

@@ -9,7 +9,7 @@ public enum PointInPolygonResult
 }
 
 [Flags]
-internal enum VertexFlags
+public enum VertexFlags
 {
     None = 0,
     OpenStart = 1,

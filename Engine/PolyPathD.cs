@@ -5,7 +5,6 @@ namespace ExtensionClipper2.Engine;
 
 public class PolyPathD : PolyPathBase
 {
-    internal double Scale { get; set; }
     public PathD? Polygon { get; private set; }
 
     public PolyPathD(PolyPathBase? parent = null) : base(parent) { }
@@ -14,7 +13,6 @@ public class PolyPathD : PolyPathBase
     public override PolyPathBase AddChild(PathD p)
     {
         PolyPathBase newChild = new PolyPathD(this);
-        (newChild as PolyPathD)!.Scale = Scale;
         (newChild as PolyPathD)!.Polygon = p;
         _childs.Add(newChild);
         return newChild;
@@ -35,7 +33,7 @@ public class PolyPathD : PolyPathBase
     {
         double result = Polygon == null ? 0 : Clipper.Area(Polygon);
 
-        for (int i = 0; i < _childs.Count; i++)
+        for (var i = 0; i < _childs.Count; i++)
         {
             PolyPathD child = (PolyPathD)_childs[i];
             result += child.Area();
@@ -46,6 +44,6 @@ public class PolyPathD : PolyPathBase
 
 public class PolyTreeD : PolyPathD
 {
-    public new double Scale => base.Scale;
+    
 }
 

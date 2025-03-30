@@ -11,8 +11,6 @@ namespace ExtensionClipper2.Core
         internal const double MinCoord = double.MinValue / 4;
         internal const double InvalidValue = double.MaxValue;
 
-        internal const double floatingPointTolerance = 1E-12;
-
         private static readonly string precision_range_error = "Error: Precision is out of range.";
 
         public static double CrossProduct(PointD pt1, PointD pt2, PointD pt3)
@@ -31,7 +29,6 @@ namespace ExtensionClipper2.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsAlmostZero(double value)
         {
-            // Используем новую константу Epsilon для сравнения с нулём
             return (Math.Abs(value) <= Epsilon.GetEpsilonValue());
         }
 
@@ -39,20 +36,15 @@ namespace ExtensionClipper2.Core
         internal static int TriSign(double x)
         {
             if (x < 0) return -1;
-            return x > 1 ? 1 : 0;
+            return x > 0.01 ? 1 : 0;
         }
 
         internal static bool ProductsAreEqual(double a, double b, double c, double d)
         {
-            var absA = Math.Abs(a);
-            var absB = Math.Abs(b);
-            var absC = Math.Abs(c);
-            var absD = Math.Abs(d);
-
             var sign_ab = TriSign(a) * TriSign(b);
             var sign_cd = TriSign(c) * TriSign(d);
 
-            return sign_ab == sign_cd;
+            return Clipper.AlmostEqual(a, c) && sign_ab == sign_cd;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
