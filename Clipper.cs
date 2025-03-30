@@ -14,12 +14,21 @@ using ExtensionClipper2.RectClips;
 
 namespace ExtensionClipper2
 {
-    internal static class Epsilon
+
+    public static class Epsilon
     {
-        private const double _value = 1E-14;
+        private static double _value = 1E-14;
+        private static bool _useEpsilon = true;
 
         internal static double GetEpsilonValue()
             => _value;
+
+        public static void SetEpsilonValue(double value)
+        {
+            if(value >= 0)
+                _value = value;
+        }
+
     }
 
     public static class Clipper
@@ -29,7 +38,6 @@ namespace ExtensionClipper2
 
         public static bool AlmostEqual(double a, double b)
         {
-            return a == b;
             return Math.Abs(a - b) <= Epsilon.GetEpsilonValue() * Math.Max(Math.Abs(a), Math.Abs(b));
         }
         public static bool VertexValueEquals(Vertex a, Vertex b)

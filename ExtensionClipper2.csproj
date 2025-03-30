@@ -1,9 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<Optimize>true</Optimize>
+		<TieredCompilation>true</TieredCompilation>
+		<TieredPGO>true</TieredPGO>
+		<EnableNETAnalyzers>false</EnableNETAnalyzers>
+
+		<DebugType>none</DebugType>
+		<DebugSymbols>false</DebugSymbols>
+
+		<ReadyToRun>true</ReadyToRun>
+		<PublishReadyToRun>true</PublishReadyToRun>
+	</PropertyGroup>
 
 </Project>
