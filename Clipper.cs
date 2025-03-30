@@ -1,14 +1,11 @@
 ﻿using ExtensionClipper2.Core;
 using ExtensionClipper2.Engine;
 using ExtensionClipper2.Engine.Property;
-using System.IO;
 using System.Runtime.CompilerServices;
 using ExtensionClipper2.Enums;
-using static ExtensionClipper2.Engine.ClipperD;
 using ClipperD = ExtensionClipper2.Engine.ClipperD;
 using ClipType = ExtensionClipper2.Enums.ClipType;
 using FillRule = ExtensionClipper2.Enums.FillRule;
-using InternalClipper = ExtensionClipper2.Core.InternalClipper;
 using PathsD = ExtensionClipper2.Core.PathsD;
 using PathType = ExtensionClipper2.Enums.PathType;
 using PolyTreeD = ExtensionClipper2.Engine.PolyTreeD;
@@ -32,6 +29,7 @@ namespace ExtensionClipper2
 
         public static bool AlmostEqual(double a, double b)
         {
+            return a == b;
             return Math.Abs(a - b) <= Epsilon.GetEpsilonValue() * Math.Max(Math.Abs(a), Math.Abs(b));
         }
         public static bool VertexValueEquals(Vertex a, Vertex b)
