@@ -20,7 +20,7 @@
 	<PropertyGroup>
 		<GeneratePackageBuild>true</GeneratePackageBuild>
 		<PackageId>Clipper2.Extension</PackageId>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Authors>TailsGhost</Authors>
 		<Description>Расширение для библиотеки Clipper2 от Angus Johnson (https://github.com/AngusJohnson/Clipper2), оптимизированное для работы с double.</Description>
 		<PackageOutputPath>$(OutputPath)</PackageOutputPath>
