@@ -38,30 +38,36 @@ namespace ExtensionClipper2
 
         public static bool AlmostEqual(double a, double b)
         {
-            return Math.Abs(a - b) <= Epsilon.GetEpsilonValue() * Math.Max(Math.Abs(a), Math.Abs(b));
+            //return Math.Abs(a - b) <= Epsilon.GetEpsilonValue() * Math.Max(Math.Abs(a), Math.Abs(b));
+           return a == b;
         }
         public static bool VertexValueEquals(Vertex a, Vertex b)
         {
-            return AlmostEqual(a.pt.X, b.pt.X) && AlmostEqual(a.pt.Y, b.pt.Y);
+          return  a == b;
+            //return AlmostEqual(a.pt.X, b.pt.X) && AlmostEqual(a.pt.Y, b.pt.Y);
         }
 
         public static bool GreaterThan(double a, double b)
         {
+            return a > b;
             return a > b && !AlmostEqual(a, b);
         }
 
         public static bool LessThan(double a, double b)
         {
+            return a < b;
             return a < b && !AlmostEqual(a, b);
         }
 
         public static bool GreaterThanOrEqual(double a, double b)
         {
+            return a >= b;
             return a > b || AlmostEqual(a, b);
         }
 
         public static bool LessThanOrEqual(double a, double b)
         {
+            return a <= b;
             return a < b || AlmostEqual(a, b);
         }
 
