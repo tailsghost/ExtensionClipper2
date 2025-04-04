@@ -18,17 +18,9 @@ namespace ExtensionClipper2
     public static class Epsilon
     {
         private static double _value = 1E-14;
-        private static bool _useEpsilon = true;
 
         internal static double GetEpsilonValue()
             => _value;
-
-        public static void SetEpsilonValue(double value)
-        {
-            if(value >= 0)
-                _value = value;
-        }
-
     }
 
     public static class Clipper
@@ -38,37 +30,31 @@ namespace ExtensionClipper2
 
         public static bool AlmostEqual(double a, double b)
         {
-            //return Math.Abs(a - b) <= Epsilon.GetEpsilonValue() * Math.Max(Math.Abs(a), Math.Abs(b));
            return a == b;
         }
         public static bool VertexValueEquals(Vertex a, Vertex b)
         {
-          return  a == b;
-            //return AlmostEqual(a.pt.X, b.pt.X) && AlmostEqual(a.pt.Y, b.pt.Y);
+            return  a == b;
         }
 
         public static bool GreaterThan(double a, double b)
         {
             return a > b;
-            return a > b && !AlmostEqual(a, b);
         }
 
         public static bool LessThan(double a, double b)
         {
             return a < b;
-            return a < b && !AlmostEqual(a, b);
         }
 
         public static bool GreaterThanOrEqual(double a, double b)
         {
             return a >= b;
-            return a > b || AlmostEqual(a, b);
         }
 
         public static bool LessThanOrEqual(double a, double b)
         {
             return a <= b;
-            return a < b || AlmostEqual(a, b);
         }
 
         public static PathsD Intersect(PathsD subject, PathsD clip,
