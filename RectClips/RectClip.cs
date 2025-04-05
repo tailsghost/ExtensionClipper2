@@ -177,7 +177,7 @@ internal class RectClip
     private static void UncoupleEdge(OutPt2 op)
     {
         if (op.edge == null) return;
-        for (int i = 0; i < op.edge.Count; i++)
+        for (var i = 0; i < op.edge.Count; i++)
         {
             var op2 = op.edge[i];
             if (op2 != op) continue;
@@ -498,7 +498,7 @@ internal class RectClip
         while (i <= highI)
         {
             prev = loc;
-            Location prevCrossLoc = crossingLoc;
+            var prevCrossLoc = crossingLoc;
             GetNextLocation(path, ref loc, ref i, highI);
             if (i > highI) break;
 
@@ -641,12 +641,12 @@ internal class RectClip
             for (var i = 0; i < results_.Count; i++)
             {
                 var op = results_[i];
-                PathD tmp = GetPath(op);
+                var tmp = GetPath(op);
                 if (tmp.Count > 0) result.Add(tmp);
             }
 
             results_.Clear();
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
                 edges_[i].Clear();
         }
         return result;

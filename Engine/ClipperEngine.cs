@@ -68,9 +68,9 @@ internal static class ClipperEngine
             if (isOpen)
             {
                 curr_v = v0.next;
-                while (curr_v != v0 && curr_v!.pt.Y == v0.pt.Y)
+                while (curr_v != v0 && Clipper.AlmostEqual(curr_v!.pt.Y, v0.pt.Y))
                     curr_v = curr_v.next;
-                going_up = curr_v.pt.Y <= v0.pt.Y;
+                going_up = Clipper.LessThanOrEqual(curr_v.pt.Y, v0.pt.Y);
                 if (going_up)
                 {
                     v0.flags = VertexFlags.OpenStart;
@@ -86,7 +86,7 @@ internal static class ClipperEngine
                     prev_v = prev_v.prev;
                 if (prev_v == v0)
                     continue;
-                going_up = !Clipper.AlmostEqual(prev_v.pt.Y, v0.pt.Y) && prev_v.pt.Y > v0.pt.Y;
+                going_up = !Clipper.AlmostEqual(prev_v.pt.Y, v0.pt.Y) && Clipper.GreaterThan(prev_v.pt.Y, v0.pt.Y);
             }
 
             var going_up0 = going_up;
@@ -94,12 +94,12 @@ internal static class ClipperEngine
             curr_v = v0.next;
             while (curr_v != v0)
             {
-                if (!Clipper.AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && curr_v!.pt.Y > prev_v.pt.Y && going_up)
+                if (!Clipper.AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && Clipper.GreaterThan(curr_v!.pt.Y,prev_v.pt.Y) && going_up)
                 {
                     prev_v.flags |= VertexFlags.LocalMax;
                     going_up = false;
                 }
-                else if (!Clipper.AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && curr_v.pt.Y < prev_v.pt.Y && !going_up)
+                else if (!Clipper.AlmostEqual(curr_v.pt.Y, prev_v.pt.Y) && Clipper.LessThan(curr_v.pt.Y, prev_v.pt.Y) && !going_up)
                 {
                     going_up = true;
                     AddLocMin(prev_v, polytype, isOpen, minimaList);

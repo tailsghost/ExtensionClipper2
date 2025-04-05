@@ -49,7 +49,7 @@ public struct RectD
 
     public readonly bool IsEmpty()
     {
-        return Bottom <= Top || Right <= Left;
+        return Clipper.LessThanOrEqual(Bottom, Top)  || Clipper.LessThanOrEqual(Right, Left);
     }
 
     public readonly PointD MidPoint()
@@ -59,20 +59,20 @@ public struct RectD
 
     public readonly bool Contains(PointD pt)
     {
-        return pt.X > Left && pt.X < Right &&
-               pt.Y > Top && pt.Y < Bottom;
+        return Clipper.GreaterThan(pt.X, Left) && Clipper.LessThan(pt.X, Right) &&
+              Clipper.GreaterThan(pt.Y, Top) && Clipper.LessThan(pt.Y, Bottom);
     }
 
     public readonly bool Contains(RectD rec)
     {
-        return rec.Left >= Left && rec.Right <= Right &&
-               rec.Top >= Top && rec.Bottom <= Bottom;
+        return Clipper.GreaterThanOrEqual(rec.Left, Left) && Clipper.LessThanOrEqual(rec.Right, Right) &&
+              Clipper.GreaterThanOrEqual(rec.Top, Top) && Clipper.LessThanOrEqual(rec.Bottom, Bottom);
     }
 
     public readonly bool Intersects(RectD rec)
     {
-        return (Math.Max(Left, rec.Left) < Math.Min(Right, rec.Right)) &&
-               (Math.Max(Top, rec.Top) < Math.Min(Bottom, rec.Bottom));
+        return (Clipper.LessThan(Math.Max(Left, rec.Left), Math.Min(Right, rec.Right))) &&
+               (Clipper.LessThan(Math.Max(Top, rec.Top), Math.Min(Bottom, rec.Bottom)));
     }
 
     public readonly PathD AsPath()

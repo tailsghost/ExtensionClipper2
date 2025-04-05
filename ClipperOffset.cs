@@ -98,7 +98,7 @@ public class ClipperOffsetD
     {
         var num = 0;
 
-        for (int i = 0; i < groupList.Count; i++)
+        for (var i = 0; i < groupList.Count; i++)
         {
             var group = groupList[i];
             num += (group.endType == EndType.Joined ? (group.inPaths.Count * 2) : group.inPaths.Count);
@@ -147,7 +147,7 @@ public class ClipperOffsetD
 
         this.delta = delta;
         mitLimSqr = (MiterLimit <= 1.0 ? 2.0 : (2.0 / Clipper.Sqr(MiterLimit)));
-        foreach (Group group in groupList)
+        foreach (var group in groupList)
         {
             DoGroupOffset(group);
         }
@@ -213,11 +213,11 @@ public class ClipperOffsetD
         for (var i = 0; i < paths.Count; i++)
         {
 
-            for (int j = 0; j < paths[i].Count; j++)
+            for (var j = 0; j < paths[i].Count; j++)
             {
                 var pt = paths[i][j];
 
-                if (pt.Y >= point.Y && (pt.Y != point.Y || pt.X < point.X))
+                if (Clipper.GreaterThanOrEqual(pt.Y, point.Y) && (!Clipper.GreaterThan(pt.Y, point.Y) || Clipper.LessThan(pt.X, point.X)))
                 {
                     result = i;
                     point.X = pt.X;
@@ -616,12 +616,12 @@ public class ClipperOffsetD
                     }
                     if (group.endType == EndType.Round)
                     {
-                        var steps = (int)Math.Ceiling(stepsPerRad * 2.0 * Math.PI);
+                        var steps = Math.Ceiling(stepsPerRad * 2.0 * Math.PI);
                         pathOut = Clipper.Ellipse(center, absDelta, absDelta, steps);
                     }
                     else
                     {
-                        var offset = (int)Math.Ceiling(absDelta);
+                        var offset = Math.Ceiling(absDelta);
                         pathOut = new RectD(center.X - offset, center.Y - offset, center.X + offset, center.Y + offset).AsPath();
                     }
                     solution.Add(pathOut);

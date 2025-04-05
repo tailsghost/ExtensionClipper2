@@ -19,7 +19,7 @@ namespace ExtensionClipper2
     {
         private static double _value = 1E-14;
 
-        internal static double GetEpsilonValue()
+        public static double GetEpsilonValue()
             => _value;
     }
 
@@ -30,7 +30,7 @@ namespace ExtensionClipper2
 
         public static bool AlmostEqual(double a, double b)
         {
-           return a == b;
+            return Math.Abs(a - b) <= Epsilon.GetEpsilonValue() * Math.Max(Math.Abs(a), Math.Abs(b));
         }
         public static bool VertexValueEquals(Vertex a, Vertex b)
         {
@@ -39,22 +39,22 @@ namespace ExtensionClipper2
 
         public static bool GreaterThan(double a, double b)
         {
-            return a > b;
+            return a > b && !AlmostEqual(a, b);
         }
 
         public static bool LessThan(double a, double b)
         {
-            return a < b;
+            return a < b && !AlmostEqual(a, b);
         }
 
         public static bool GreaterThanOrEqual(double a, double b)
         {
-            return a >= b;
+            return a > b || AlmostEqual(a, b);
         }
 
         public static bool LessThanOrEqual(double a, double b)
         {
-            return a <= b;
+            return a < b || AlmostEqual(a, b);
         }
 
         public static PathsD Intersect(PathsD subject, PathsD clip,
@@ -130,7 +130,7 @@ namespace ExtensionClipper2
         public static PathsD InflatePaths(PathsD paths, double delta, JoinType joinType,
             EndType endType)
         {
-            var co = new ClipperOffsetD(2, 0.01);
+            var co = new ClipperOffsetD(0.75, 0.01);
             co.AddPaths(paths, joinType, endType);
             var tmp = new PathsD();
             co.Execute(delta, tmp);
@@ -139,7 +139,7 @@ namespace ExtensionClipper2
 
         public static PathsD RectClip(RectD rect, PathsD paths)
         {
-            if (rect.IsEmpty() || paths.Count == 0) return new PathsD();
+            if (rect.IsEmpty() || paths.Count == 0) return new();
             var rc = new RectClip(rect);
             var tmpPath = rc.Execute(paths);
             return tmpPath;
@@ -557,18 +557,18 @@ namespace ExtensionClipper2
 
 
         public static PathD Ellipse(PointD center,
-            double radiusX, double radiusY = 0, int steps = 0)
+            double radiusX, double radiusY = 0, double steps = 0)
         {
-            if (radiusX <= 0) return new();
-            if (radiusY <= 0) radiusY = radiusX;
-            if (steps <= 2)
-                steps = (int)Math.Ceiling(Math.PI * Math.Sqrt((radiusX + radiusY) / 2));
+            if (LessThanOrEqual(radiusX, 0)) return new();
+            if (LessThanOrEqual(radiusY, 0)) radiusY = radiusX;
+            if (LessThanOrEqual(steps, 2))
+                steps = Math.Ceiling(Math.PI * Math.Sqrt((radiusX + radiusY) / 2));
 
             var si = Math.Sin(2 * Math.PI / steps);
             var co = Math.Cos(2 * Math.PI / steps);
             double dx = co, dy = si;
-            var result = new PathD(steps) { new PointD(center.X + radiusX, center.Y) };
-            for (var i = 1; i < steps; ++i)
+            var result = new PathD((int)steps) { new PointD(center.X + radiusX, center.Y) };
+            for (var i = 1; i < (int)steps; ++i)
             {
                 result.Add(new PointD(center.X + radiusX * dx, center.Y + radiusY * dy));
                 var x = dx * co - dy * si;
@@ -598,7 +598,6 @@ namespace ExtensionClipper2
             Console.WriteLine("Polytree Root");
             foreach (PolyPathD child in polytree) { ShowPolyPathStructure(child, 1); }
         }
-
 
     }
 }

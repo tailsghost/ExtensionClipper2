@@ -31,11 +31,11 @@ public class PolyPathD : PolyPathBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double Area()
     {
-        double result = Polygon == null ? 0 : Clipper.Area(Polygon);
+        var result = Polygon == null ? 0 : Clipper.Area(Polygon);
 
         for (var i = 0; i < _childs.Count; i++)
         {
-            PolyPathD child = (PolyPathD)_childs[i];
+            var child = (PolyPathD)_childs[i];
             result += child.Area();
         }
         return result;

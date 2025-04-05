@@ -61,7 +61,7 @@ public class ClipperD : ClipperBase
     public bool Execute(ClipType clipType, FillRule fillRule,
         PathsD solutionClosed, PathsD solutionOpen)
     {
-        PathsD solClosed = new PathsD(), solOpen = new PathsD();
+        PathsD solClosed = new(), solOpen = new();
 
         var success = true;
         solutionClosed.Clear();
@@ -98,7 +98,7 @@ public class ClipperD : ClipperBase
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Execute(ClipType clipType, FillRule fillRule, PathsD solutionClosed)
     {
-        return Execute(clipType, fillRule, solutionClosed, new PathsD());
+        return Execute(clipType, fillRule, solutionClosed, new());
     }
 
     public bool Execute(ClipType clipType, FillRule fillRule, PolyTreeD polytree, PathsD openPaths)

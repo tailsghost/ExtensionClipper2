@@ -59,7 +59,7 @@ internal class RectClipLines : RectClip
         results_.Clear();
         if (path.Count < 2 || rect_.IsEmpty()) return;
 
-        Location prev = Location.inside;
+        var prev = Location.inside;
         int i = 1, highI = path.Count - 1;
         if (!GetLocation(rect_, path[0], out var loc))
         {

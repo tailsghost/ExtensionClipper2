@@ -24,8 +24,8 @@ public class PathsD : List<PathD>
     public PathsD(IEnumerable<PathD> paths) : base(paths) { }
     public string ToString(int precision = 2)
     {
-        string s = "";
-        for (int i = 0; i < this.Count; i++)
+        var s = "";
+        for (var i = 0; i < this.Count; i++)
         {
             s = s + this[i].ToString(precision) + "\n";
         }

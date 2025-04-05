@@ -121,17 +121,17 @@ namespace ExtensionClipper2.Core
                         CrossProduct(seg2b, seg1a, seg1b) < 0);
             var res1 = CrossProduct(seg1a, seg2a, seg2b);
             var res2 = CrossProduct(seg1b, seg2a, seg2b);
-            if (res1 * res2 > 0) return false;
+            if (Clipper.GreaterThan(res1 * res2, 0)) return false;
             var res3 = CrossProduct(seg2a, seg1a, seg1b);
             var res4 = CrossProduct(seg2b, seg1a, seg1b);
-            if (res3 * res4 > 0) return false;
+            if (Clipper.GreaterThan(res3 * res4, 0)) return false;
             return (res1 != 0 || res2 != 0 || res3 != 0 || res4 != 0);
         }
 
         public static PointD GetClosestPtOnSegment(PointD offPt,
             PointD seg1, PointD seg2)
         {
-            if (seg1.X == seg2.X && seg1.Y == seg2.Y) return seg1;
+            if (Clipper.AlmostEqual(seg1.X, seg2.X) && Clipper.AlmostEqual(seg1.Y, seg2.Y)) return seg1;
             var dx = (seg2.X - seg1.X);
             var dy = (seg2.Y - seg1.Y);
             var q = ((offPt.X - seg1.X) * dx +
@@ -154,7 +154,7 @@ namespace ExtensionClipper2.Core
             if (start == len) return PointInPolygonResult.IsOutside;
 
             double d;
-            bool isAbove = polygon[start].Y < pt.Y, startingAbove = isAbove;
+            bool isAbove = Clipper.LessThan(polygon[start].Y, pt.Y), startingAbove = isAbove;
             int val = 0, i = start + 1, end = len;
             while (true)
             {
@@ -167,11 +167,11 @@ namespace ExtensionClipper2.Core
 
                 if (isAbove)
                 {
-                    while (i < end && polygon[i].Y < pt.Y) i++;
+                    while (i < end && Clipper.LessThan(polygon[i].Y, pt.Y)) i++;
                 }
                 else
                 {
-                    while (i < end && polygon[i].Y > pt.Y) i++;
+                    while (i < end && Clipper.GreaterThan(polygon[i].Y, pt.Y)) i++;
                 }
 
                 if (i == end) continue;
@@ -183,7 +183,7 @@ namespace ExtensionClipper2.Core
                 if (IsAlmostZero(curr.Y - pt.Y))
                 {
                     if (IsAlmostZero(curr.X - pt.X) || (IsAlmostZero(curr.Y - prev.Y) &&
-                        ((pt.X < prev.X) != (pt.X < curr.X))))
+                        ((Clipper.LessThan(pt.X, prev.X)) != (Clipper.LessThan(pt.X, curr.X)))))
                         return PointInPolygonResult.IsOn;
                     i++;
                     if (i == start) break;
@@ -191,7 +191,7 @@ namespace ExtensionClipper2.Core
                 }
 
 
-                if (pt.X > prev.X && pt.X > curr.X)
+                if (Clipper.GreaterThan(pt.X, prev.X) && Clipper.GreaterThan(pt.X, curr.X))
                 {
                     val = 1 - val;
                 }
