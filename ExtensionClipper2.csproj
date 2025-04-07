@@ -20,9 +20,9 @@
 	<PropertyGroup>
 		<GeneratePackageBuild>true</GeneratePackageBuild>
 		<PackageId>Clipper2.Extension</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.0.3</Version>
 		<Authors>TailsGhost</Authors>
-		<Description>Расширение для библиотеки Clipper2 от Angus Johnson (https://github.com/AngusJohnson/Clipper2), оптимизированное для работы с double.</Description>
+		<Description>An extension to the Clipper2 (https://github.com/AngusJohnson/Clipper2) library by Angus Johnson, optimized for high-precision geometric operations using double-precision floating-point numbers.</Description>
 		<PackageOutputPath>$(OutputPath)</PackageOutputPath>
 	</PropertyGroup>
 

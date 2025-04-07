@@ -1,1 +1,1 @@
-## Расширение для библиотеки Clipper2 от [Angus Johnson](https://github.com/AngusJohnson/Clipper2), оптимизированное для работы с double.
+## An extension to the [Clipper2](https://github.com/AngusJohnson/Clipper2) library by Angus Johnson, optimized for high-precision geometric operations using double-precision floating-point numbers.
